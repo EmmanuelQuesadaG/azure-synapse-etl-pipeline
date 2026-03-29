@@ -1,0 +1,88 @@
+{
+  "name": "pipeline_covid_lz_to_bz",
+  "properties": {
+    "description": "Copies covid_worldwide_rd.csv from LandingZone to Bronze layer, then deletes the source file. Logging enabled.",
+    "activities": [
+      {
+        "name": "covid_worldwide_rd_LZ_to_BZ",
+        "type": "Copy",
+        "dependsOn": [],
+        "typeProperties": {
+          "source": {
+            "type": "DelimitedTextSource",
+            "storeSettings": {
+              "type": "AzureBlobFSReadSettings",
+              "recursive": false,
+              "enablePartitionDiscovery": false
+            },
+            "formatSettings": {
+              "type": "DelimitedTextReadSettings"
+            }
+          },
+          "sink": {
+            "type": "DelimitedTextSink",
+            "storeSettings": {
+              "type": "AzureBlobFSWriteSettings"
+            },
+            "formatSettings": {
+              "type": "DelimitedTextWriteSettings",
+              "quoteAllText": true,
+              "fileExtension": ".csv"
+            }
+          },
+          "enableLogging": true,
+          "logStorageSettings": {
+            "linkedServiceName": {
+              "referenceName": "ADLSLog",
+              "type": "LinkedServiceReference"
+            },
+            "path": "datatokioolympicsgps/Logs"
+          }
+        },
+        "inputs": [
+          {
+            "referenceName": "extLZ_covid_worldwide_rd",
+            "type": "DatasetReference"
+          }
+        ],
+        "outputs": [
+          {
+            "referenceName": "Load_BZ_covid_worldwide_rd",
+            "type": "DatasetReference"
+          }
+        ]
+      },
+      {
+        "name": "Delete_covid_worldwide_rd_LZ",
+        "type": "Delete",
+        "dependsOn": [
+          {
+            "activity": "covid_worldwide_rd_LZ_to_BZ",
+            "dependencyConditions": ["Succeeded"]
+          }
+        ],
+        "typeProperties": {
+          "dataset": {
+            "referenceName": "extLZ_covid_worldwide_rd",
+            "type": "DatasetReference"
+          },
+          "enableLogging": true,
+          "logStorageSettings": {
+            "linkedServiceName": {
+              "referenceName": "ADLSLoad",
+              "type": "LinkedServiceReference"
+            },
+            "path": "datatokioolympicsgps/Logs"
+          },
+          "recursive": false,
+          "maxConcurrentConnections": 1
+        }
+      }
+    ],
+    "linkedServiceName": {
+      "ADLSext": "Source linked service (LandingZone reads)",
+      "ADLSLoad": "Sink linked service (Bronze writes)",
+      "ADLSLog": "Logging linked service"
+    }
+  }
+}

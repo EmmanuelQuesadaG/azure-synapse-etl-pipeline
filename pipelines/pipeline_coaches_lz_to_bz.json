@@ -1,0 +1,88 @@
+{
+  "name": "pipeline_coaches_lz_to_bz",
+  "properties": {
+    "description": "Copies Coaches.csv from LandingZone to Bronze layer, then deletes the source file. Logging enabled.",
+    "activities": [
+      {
+        "name": "Coaches_LZ_to_BZ",
+        "type": "Copy",
+        "dependsOn": [],
+        "typeProperties": {
+          "source": {
+            "type": "DelimitedTextSource",
+            "storeSettings": {
+              "type": "AzureBlobFSReadSettings",
+              "recursive": false,
+              "enablePartitionDiscovery": false
+            },
+            "formatSettings": {
+              "type": "DelimitedTextReadSettings"
+            }
+          },
+          "sink": {
+            "type": "DelimitedTextSink",
+            "storeSettings": {
+              "type": "AzureBlobFSWriteSettings"
+            },
+            "formatSettings": {
+              "type": "DelimitedTextWriteSettings",
+              "quoteAllText": true,
+              "fileExtension": ".csv"
+            }
+          },
+          "enableLogging": true,
+          "logStorageSettings": {
+            "linkedServiceName": {
+              "referenceName": "ADLSLog",
+              "type": "LinkedServiceReference"
+            },
+            "path": "datatokioolympicsgps/Logs"
+          }
+        },
+        "inputs": [
+          {
+            "referenceName": "extLZ_Coaches",
+            "type": "DatasetReference"
+          }
+        ],
+        "outputs": [
+          {
+            "referenceName": "Load_BZ_Coaches",
+            "type": "DatasetReference"
+          }
+        ]
+      },
+      {
+        "name": "Delete_Coaches_LZ",
+        "type": "Delete",
+        "dependsOn": [
+          {
+            "activity": "Coaches_LZ_to_BZ",
+            "dependencyConditions": ["Succeeded"]
+          }
+        ],
+        "typeProperties": {
+          "dataset": {
+            "referenceName": "extLZ_Coaches",
+            "type": "DatasetReference"
+          },
+          "enableLogging": true,
+          "logStorageSettings": {
+            "linkedServiceName": {
+              "referenceName": "ADLSLoad",
+              "type": "LinkedServiceReference"
+            },
+            "path": "datatokioolympicsgps/Logs"
+          },
+          "recursive": false,
+          "maxConcurrentConnections": 1
+        }
+      }
+    ],
+    "linkedServiceName": {
+      "ADLSext": "Source linked service (LandingZone reads)",
+      "ADLSLoad": "Sink linked service (Bronze writes)",
+      "ADLSLog": "Logging linked service"
+    }
+  }
+}
